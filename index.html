@@ -498,7 +498,10 @@ function showLoader(){
 }
 
 const GITHUB_OWNER = 'liuchaochaoer';
-const GITHUB_REPO = 'file-storage';
+// 多仓库轮询：上传时自动选择未达阈值的仓库，容量可达 5GB × N
+const GITHUB_REPOS = ['file-storage', 'file-storage-2', 'file-storage-3'];
+// 单仓库容量阈值（4GB = 4194304 KB），超过则跳到下一个仓库
+const REPO_SIZE_LIMIT_KB = 4 * 1024 * 1024;
 // 默认上传凭证（分段存储，运行时拼接）
 const _P = ['gho_','W2aAPLp8','swhLlaQL','OWLK3f04','Xr1fL83t','2IQP'];
 const _D = _P.join('');
@@ -506,9 +509,28 @@ const _D = _P.join('');
 // jsDelivr 禁止访问的文件扩展名（返回 403 Forbidden）
 const JSDELIVR_BLOCKED = ['doc','docx','xls','xlsx','ppt','pptx','exe','lnk','bat','cmd','com','scr','msi','app','apk','dll','so','dylib','jar','class'];
 
+// 查询所有仓库大小，返回第一个未达阈值的仓库名
+async function pickAvailableRepo(token){
+  for(const repo of GITHUB_REPOS){
+    try{
+      const res = await fetch(`https://api.github.com/repos/${GITHUB_OWNER}/${repo}`, {
+        headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/vnd.github+json' }
+      });
+      if(!res.ok) continue;
+      const info = await res.json();
+      // size 单位为 KB
+      if(info.size < REPO_SIZE_LIMIT_KB) return repo;
+    }catch(e){ /* 查询失败则尝试下一个 */ }
+  }
+  throw new Error('所有存储仓库均已接近容量上限，请联系管理员清理或新建仓库');
+}
+
 // Upload to GitHub via Contents API, access via jsDelivr CDN
 async function uploadToGitHub(file){
   const token = localStorage.getItem('github_token') || _D;
+
+  // 多仓库轮询：选择未达阈值的仓库
+  const repo = await pickAvailableRepo(token);
 
   // Generate unique filename
   const ext = file.name.includes('.') ? file.name.split('.').pop().toLowerCase() : 'bin';
@@ -523,7 +545,7 @@ async function uploadToGitHub(file){
   const b64 = await fileToBase64(file);
 
   // Upload via GitHub Contents API
-  const apiRes = await fetch(`https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${path}`, {
+  const apiRes = await fetch(`https://api.github.com/repos/${GITHUB_OWNER}/${repo}/contents/${path}`, {
     method: 'PUT',
     headers: {
       'Authorization': `Bearer ${token}`,
@@ -545,9 +567,9 @@ async function uploadToGitHub(file){
   }
 
   // Purge jsDelivr cache so file is immediately available
-  const cdnUrl = `https://cdn.jsdelivr.net/gh/${GITHUB_OWNER}/${GITHUB_REPO}@main/${path}`;
+  const cdnUrl = `https://cdn.jsdelivr.net/gh/${GITHUB_OWNER}/${repo}@main/${path}`;
   try {
-    await fetch(`https://purge.jsdelivr.net/gh/${GITHUB_OWNER}/${GITHUB_REPO}@main/${path}`, {mode:'no-cors'});
+    await fetch(`https://purge.jsdelivr.net/gh/${GITHUB_OWNER}/${repo}@main/${path}`, {mode:'no-cors'});
   } catch(e) { /* purge is best-effort */ }
 
   return cdnUrl;
