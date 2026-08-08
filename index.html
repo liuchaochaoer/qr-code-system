@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>万能二维码生成系统 · 永久有效 · 无扫描限制</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <style>
@@ -148,6 +148,63 @@
   .modal-help a{color:#818cf8}
   .modal-help code{background:rgba(99,102,241,.15);padding:1px 5px;border-radius:4px;color:#c4b5fd}
   .modal-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:16px}
+
+  /* ===== 移动端优化 ===== */
+  @media(max-width:820px){
+    body{padding:12px;-webkit-tap-highlight-color:transparent}
+    header{padding:18px 0 12px}
+    header h1{font-size:1.6em}
+    header p{font-size:.86em;margin-top:6px}
+    .badges{gap:6px;margin-top:10px}
+    .badge{padding:4px 10px;font-size:.72em}
+    .settings-bar{margin-bottom:12px}
+    .panel{padding:16px;border-radius:14px}
+    .grid{gap:14px}
+    /* 标签栏横向滚动，避免换行错乱 */
+    .tabs{gap:5px;margin-bottom:14px;flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+    .tabs::-webkit-scrollbar{display:none}
+    .tab{padding:8px 12px;font-size:.8em;white-space:nowrap;flex-shrink:0}
+    /* 输入框 16px 防止 iOS 聚焦自动放大 */
+    .field input[type=text],.field input[type=url],.field textarea,.field select{font-size:16px;padding:12px 14px}
+    .field label{font-size:.8em}
+    .field textarea{min-height:110px}
+    .drop{padding:24px}
+    .drop .big{font-size:1.9em;margin-bottom:4px}
+    .drop .t{font-size:.92em}
+    .drop .s{font-size:.78em}
+    .fileinfo{font-size:.82em}
+    .opts{gap:8px}
+    /* 二维码面板不固定，跟随内容 */
+    .qr-panel{position:static}
+    .qr-box{min-height:240px;padding:18px;border-radius:12px}
+    .qr-empty{font-size:.86em}
+    .qr-empty .ico{font-size:2.4em;margin-bottom:8px}
+    .qr-actions{gap:7px;margin-top:12px}
+    .btn{padding:12px;font-size:.95em}
+    .btn.sec{font-size:.86em}
+    .qr-meta{font-size:.74em;padding:9px;margin-top:12px}
+    .hist-item{font-size:.8em;padding:8px;gap:8px}
+    .hist-item .h-ico{font-size:1.2em}
+    .tip{font-size:.74em}
+    .alert{font-size:.8em;padding:9px 11px}
+    .modal{padding:12px}
+    .modal-content{padding:18px;border-radius:14px}
+    .modal-content h3{font-size:1.05em}
+    .modal-desc{font-size:.82em}
+    .modal-help{font-size:.76em;padding:10px;line-height:1.7}
+    .modal-actions{gap:7px}
+    footer{padding:20px 0 8px;font-size:.76em}
+  }
+  /* 超小屏 (<380px) 进一步压缩 */
+  @media(max-width:380px){
+    header h1{font-size:1.4em}
+    .panel{padding:13px}
+    .opts{grid-template-columns:1fr}
+    .qr-actions{grid-template-columns:1fr}
+    .badge{padding:3px 8px;font-size:.68em}
+    .tab{padding:7px 10px;font-size:.76em}
+    .qr-box{min-height:200px;padding:14px}
+  }
 </style>
 </head>
 <body>
