@@ -441,7 +441,7 @@ async function uploadToGitHub(file){
       'Content-Type': 'application/json'
     },
     body: JSON.stringify({
-      message: `Upload ${safeName}`,
+      message: `Upload ${safeBase}`,
       content: b64
     })
   });
