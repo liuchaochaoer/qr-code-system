@@ -553,61 +553,13 @@ async function uploadToGitHub(file){
   return cdnUrl;
 }
 
-// 生成在线播放器页面并上传，返回播放器页面 URL
+// 生成在线播放器中转 URL（指向 GitHub Pages 上的 player.html，通过参数传递媒体地址）
+// 注：jsDelivr CDN 会将 .html 以 text/plain 返回导致显示源码，故改用 GitHub Pages 中转页面
 async function uploadPlayerPage(mediaUrl, fileName, type){
-  const token = localStorage.getItem('github_token') || _D;
-  const isVideo = type === 'video';
   const safeTitle = fileName.replace(/</g,'&lt;').replace(/>/g,'&gt;').slice(0,60);
-  const ts = Date.now().toString(36);
-  const rand = Math.random().toString(36).slice(2, 6);
-  const path = `players/${ts}_${rand}.html`;
-
-  const html = `<!DOCTYPE html>
-<html lang="zh-CN">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no,viewport-fit=cover">
-<title>${safeTitle}</title>
-<style>
-*{margin:0;padding:0;box-sizing:border-box}
-body{background:#0f172a;color:#f1f5f9;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei",sans-serif;min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:20px}
-h1{font-size:1.1em;margin-bottom:16px;text-align:center;word-break:break-all;max-width:100%}
-.media-wrap{width:100%;max-width:640px}
-video,audio{width:100%;max-width:100%;border-radius:12px;background:#000}
-audio{background:#1e293b;padding:10px}
-.dl{margin-top:18px;padding:10px 24px;border-radius:10px;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;text-decoration:none;font-weight:700;display:inline-block}
-.dl:active{transform:scale(.97)}
-.tip{margin-top:14px;color:#94a3b8;font-size:.8em;text-align:center}
-</style>
-</head>
-<body>
-<h1>${isVideo?'🎬':'🎵'} ${safeTitle}</h1>
-<div class="media-wrap">
-${isVideo
-  ? `<video src="${mediaUrl}" controls playsinline webkit-playsinline preload="metadata"></video>`
-  : `<audio src="${mediaUrl}" controls preload="metadata"></audio>`}
-</div>
-<a class="dl" href="${mediaUrl}" download="${safeTitle}">⬇ 下载原文件</a>
-<div class="tip">在线播放 · 永久有效</div>
-</body>
-</html>`;
-
-  const b64 = btoa(unescape(encodeURIComponent(html)));
-  const apiRes = await fetch(`https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${path}`, {
-    method: 'PUT',
-    headers: {
-      'Authorization': `Bearer ${token}`,
-      'Accept': 'application/vnd.github+json',
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({ message: `Player page for ${safeTitle}`, content: b64 })
-  });
-
-  if(!apiRes.ok) throw new Error('播放器页面生成失败');
-
-  const cdnUrl = `https://cdn.jsdelivr.net/gh/${GITHUB_OWNER}/${GITHUB_REPO}@main/${path}`;
-  try { await fetch(`https://purge.jsdelivr.net/gh/${GITHUB_OWNER}/${GITHUB_REPO}@main/${path}`, {mode:'no-cors'}); } catch(e){}
-  return cdnUrl;
+  const base = 'https://liuchaochaoer.github.io/qr-code-system/player.html';
+  const params = new URLSearchParams({ v: mediaUrl, t: safeTitle, type: type });
+  return base + '?' + params.toString();
 }
 
 function fileToBase64(file){
