@@ -107,7 +107,7 @@
     background:#fff;border-radius:14px;padding:24px;display:flex;
     align-items:center;justify-content:center;min-height:300px;
   }
-  .qr-box #qrcode img,.qr-box #qrcode canvas{display:block}
+  .qr-box #qrcode img,.qr-box #qrcode canvas{display:block;max-width:100%;height:auto}
   .qr-empty{color:#64748b;text-align:center;font-size:.9em}
   .qr-empty .ico{font-size:3em;margin-bottom:10px;opacity:.4}
   .qr-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px}
@@ -179,7 +179,7 @@
     .opts{gap:8px}
     /* 二维码面板不固定，跟随内容 */
     .qr-panel{position:static}
-    .qr-box{min-height:240px;padding:18px;border-radius:12px}
+    .qr-box{min-height:240px;padding:18px;border-radius:12px;overflow:hidden;width:100%}
     .qr-empty{font-size:.86em}
     .qr-empty .ico{font-size:2.4em;margin-bottom:8px}
     .qr-actions{gap:7px;margin-top:12px}
@@ -404,20 +404,34 @@
 </div>
 
 <script>
-// 移动端锁定：禁止双指缩放（iOS 10+ 忽略 user-scalable=no，需 JS 拦截）
-document.addEventListener('gesturestart', e => e.preventDefault(), {passive:false});
-document.addEventListener('gesturechange', e => e.preventDefault(), {passive:false});
-document.addEventListener('dblclick', e => e.preventDefault(), {passive:false});
-// 多指触摸即阻止（禁缩放，但允许单指滚动）
-document.addEventListener('touchmove', e => {
-  if(e.touches.length > 1){ e.preventDefault(); }
-}, {passive:false});
-let _lastTouchEnd = 0;
-document.addEventListener('touchend', e => {
-  const now = Date.now();
-  if(now - _lastTouchEnd <= 300){ e.preventDefault(); }
-  _lastTouchEnd = now;
-}, {passive:false});
+// 移动端锁定：彻底禁止双指缩放（iOS Safari 原生手势需在 touchstart 阶段拦截）
+(function(){
+  const stop = e => { e.preventDefault(); e.stopPropagation(); };
+  // gesture 事件：iOS 专属缩放手势
+  ['gesturestart','gesturechange','gestureend'].forEach(ev =>
+    document.addEventListener(ev, stop, {passive:false, capture:true})
+  );
+  // 多指 touchstart 立即拦截，阻止整个手势链建立
+  document.addEventListener('touchstart', e => {
+    if(e.touches.length > 1){ e.preventDefault(); }
+  }, {passive:false, capture:true});
+  // 多指 touchmove 拦截
+  document.addEventListener('touchmove', e => {
+    if(e.touches.length > 1){ e.preventDefault(); }
+  }, {passive:false, capture:true});
+  // 双击缩放拦截
+  document.addEventListener('dblclick', stop, {passive:false});
+  let _lastTouchEnd = 0;
+  document.addEventListener('touchend', e => {
+    const now = Date.now();
+    if(now - _lastTouchEnd <= 300){ e.preventDefault(); }
+    _lastTouchEnd = now;
+  }, {passive:false});
+  // 监听 wheel + CtrlKey（笔记本触控板双指缩放）
+  document.addEventListener('wheel', e => {
+    if(e.ctrlKey){ e.preventDefault(); }
+  }, {passive:false});
+})();
 
 const $ = s => document.querySelector(s);
 const $$ = s => document.querySelectorAll(s);
