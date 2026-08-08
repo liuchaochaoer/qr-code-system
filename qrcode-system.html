@@ -473,31 +473,13 @@ function fileToBase64(file){
 
 // Token management
 function updateTokenStatus(){
-  const token = localStorage.getItem('github_token');
   const status = $('#tokenStatus');
-  if(token){
-    status.textContent = '✓ 已设置';
+  if(status){
+    status.textContent = '✓ 文件上传已就绪';
     status.classList.add('ok');
-  } else {
-    status.textContent = '未设置';
-    status.classList.remove('ok');
   }
 }
 
-$('#settingsBtn').addEventListener('click', () => {
-  $('#tokenInput').value = localStorage.getItem('github_token') || '';
-  $('#tokenModal').classList.add('show');
-});
-$('#tokenCancel').addEventListener('click', () => $('#tokenModal').classList.remove('show'));
-$('#tokenSave').addEventListener('click', () => {
-  const token = $('#tokenInput').value.trim();
-  if(!token){ showAlert('warn','请输入 Token'); return; }
-  localStorage.setItem('github_token', token);
-  $('#tokenModal').classList.remove('show');
-  updateTokenStatus();
-  showAlert('info','Token 已保存，现在可以上传文件了');
-  setTimeout(hideAlert, 3000);
-});
 $('#tokenModal').addEventListener('click', e => {
   if(e.target === $('#tokenModal')) $('#tokenModal').classList.remove('show');
 });
