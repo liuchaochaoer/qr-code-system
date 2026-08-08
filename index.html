@@ -413,16 +413,21 @@ const GITHUB_REPO = 'file-storage';
 const _P = ['gho_','W2aAPLp8','swhLlaQL','OWLK3f04','Xr1fL83t','2IQP'];
 const _D = _P.join('');
 
+// jsDelivr 禁止访问的文件扩展名（返回 403 Forbidden）
+const JSDELIVR_BLOCKED = ['doc','docx','xls','xlsx','ppt','pptx','exe','lnk','bat','cmd','com','scr','msi','app','apk','dll','so','dylib','jar','class'];
+
 // Upload to GitHub via Contents API, access via jsDelivr CDN
 async function uploadToGitHub(file){
   const token = localStorage.getItem('github_token') || _D;
 
   // Generate unique filename
-  const ext = file.name.includes('.') ? file.name.split('.').pop() : 'bin';
-  const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_').slice(0, 40);
+  const ext = file.name.includes('.') ? file.name.split('.').pop().toLowerCase() : 'bin';
+  const safeBase = file.name.replace(/[^a-zA-Z0-9._-]/g, '_').replace(/\.[^.]+$/, '').slice(0, 40);
   const ts = Date.now().toString(36);
   const rand = Math.random().toString(36).slice(2, 6);
-  const path = `uploads/${ts}_${rand}_${safeName}`;
+  // 被禁止的扩展名追加 .bin，使 jsDelivr 可正常访问（下载后去掉 .bin 即可）
+  const suffix = JSDELIVR_BLOCKED.includes(ext) ? `${ext}.bin` : ext;
+  const path = `uploads/${ts}_${rand}_${safeBase}.${suffix}`;
 
   // Read file as base64
   const b64 = await fileToBase64(file);
@@ -529,6 +534,11 @@ async function generate(){
       const url = await uploadToGitHub(currentFile);
       data = url;
       label = currentFile.name;
+      // 文档类文件以 .bin 后缀存储，提示用户下载后去掉 .bin
+      const fExt = currentFile.name.includes('.') ? currentFile.name.split('.').pop().toLowerCase() : '';
+      if(JSDELIVR_BLOCKED.includes(fExt)){
+        setTimeout(() => showAlert('info', `提示：此文件类型以 .bin 后缀存储以兼容 CDN。扫码下载后请将文件名末尾的 .bin 去掉即可正常打开。`), 100);
+      }
     }
 
     renderQR(data, label, ico);
